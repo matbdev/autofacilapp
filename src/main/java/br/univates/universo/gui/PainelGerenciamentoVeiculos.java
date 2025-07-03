@@ -480,4 +480,9 @@ public final class PainelGerenciamentoVeiculos extends JPanel {
         items.forEach(model::addElement);
         combo.setModel(model);
     }
+
+    public void carregarVeiculos() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'carregarVeiculos'");
+    }
 }

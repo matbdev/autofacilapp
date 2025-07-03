@@ -5,55 +5,68 @@
 
     <groupId>br.univates.universo</groupId>
     <artifactId>autofacil</artifactId>
-    <version>1.0</version>
+    <version>2.0-modern</version>
 
-    <name>autofacil</name>
+    <name>autofacil-modern</name>
     <url>http://www.example.com</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>21</java.version>
-        <main.class>br.univates.universo.AutoFacilApp</main.class>
+        <main.class>br.univates.universo.Main</main.class>
     </properties>
 
     <dependencies>
-        <!-- Dependência do JUnit para testes -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Look and Feel FlatLaf para interface moderna -->
         <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
             <version>3.4.1</version>
-            <scope>compile</scope>
+        </dependency>
+        
+        <!-- Extras do FlatLaf para suporte a ícones SVG e componentes adicionais -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-extras</artifactId>
+            <version>3.4.1</version>
         </dependency>
 
-        <!-- Dependência para serialização/desserialização de JSON -->
+        <!-- Componente de calendário moderno -->
+        <dependency>
+            <groupId>com.github.lgooddatepicker</groupId>
+            <artifactId>LGoodDatePicker</artifactId>
+            <version>11.2.1</version>
+        </dependency>
+
+        <!-- Serialização/desserialização de JSON -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
 
-        <!-- NOVO: Componente de calendário moderno com validação -->
-        <dependency>
-            <groupId>com.github.lgooddatepicker</groupId>
-            <artifactId>LGoodDatePicker</artifactId>
-            <version>11.2.1</version>
-        </dependency>
-        
-        <!-- Dependência para a API FIPE -->
+        <!-- Cliente HTTP para API FIPE -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
         </dependency>
-
+        
+        <!-- === DEPENDÊNCIAS DE TESTE === -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <!-- Mantido para os testes da versão antiga -->
+        <dependency>
+            <groupId>com.toedter</groupId>
+            <artifactId>jcalendar</artifactId>
+            <version>1.4</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -66,7 +79,6 @@
                     <release>${java.version}</release>
                 </configuration>
             </plugin>
-            <!-- Plugin para criar um JAR executável com todas as dependências -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

@@ -1,12 +1,5 @@
 package br.univates.universo.gui;
 
-import br.univates.universo.core.Cliente;
-import br.univates.universo.data.GerenciadorAlugueis;
-import br.univates.universo.data.GerenciadorClientes;
-import br.univates.universo.util.CpfDocumentFilter;
-import br.univates.universo.util.CpfValidator;
-import br.univates.universo.util.NomeDocumentFilter;
-import br.univates.universo.util.TelefoneDocumentFilter;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -15,6 +8,7 @@ import java.awt.Insets;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -27,6 +21,14 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.PlainDocument;
+
+import br.univates.universo.core.Cliente;
+import br.univates.universo.data.GerenciadorAlugueis;
+import br.univates.universo.data.GerenciadorClientes;
+import br.univates.universo.util.CpfDocumentFilter;
+import br.univates.universo.util.CpfValidator;
+import br.univates.universo.util.NomeDocumentFilter;
+import br.univates.universo.util.TelefoneDocumentFilter;
 
 public final class PainelGerenciamentoClientes extends JPanel {
     private JTextField txtCpf, txtNome, txtTelefone, txtEmail;
@@ -280,5 +282,10 @@ public final class PainelGerenciamentoClientes extends JPanel {
             return telefone.replaceAll("(\\d{2})(\\d{4})(\\d{4})", "($1) $2-$3");
         }
         return telefone;
+    }
+
+    public void carregarClientes() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'carregarClientes'");
     }
 }
