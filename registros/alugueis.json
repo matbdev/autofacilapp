@@ -1,0 +1,14 @@
+[
+  {
+    "idAluguel": 1,
+    "placaVeiculo": "ASD1234",
+    "cpfCliente": "23415123541",
+    "dataSaida": "02/07/2025",
+    "dataPrevistaDevolucao": "09/07/2025",
+    "dataDevolucaoEfetiva": "02/07/2025",
+    "valorTotal": 1028.26,
+    "precoDiaria": 1028.26,
+    "valorMulta": 0.0,
+    "statusAluguel": "Concluído"
+  }
+]
