@@ -1,7 +1,6 @@
 package br.univates.universo.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -9,6 +8,7 @@ import java.awt.Insets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -17,9 +17,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
 import com.github.lgooddatepicker.components.DatePicker;
@@ -31,183 +33,219 @@ import br.univates.universo.core.Veiculo;
 import br.univates.universo.data.GerenciadorAlugueis;
 import br.univates.universo.data.GerenciadorClientes;
 import br.univates.universo.data.GerenciadorVeiculos;
+import br.univates.universo.util.UIDesigner;
 
-public final class PainelGerenciamentoAlugueis extends JPanel {
+/**
+ * Painel para gerenciamento de aluguéis, com interface moderna.
+ * Separa as ações de Saída e Devolução em cards e utiliza abas para
+ * organizar os aluguéis ativos e o histórico.
+ *
+ * @version 3.1
+ */
+public class PainelGerenciamentoAlugueis extends JPanel {
 
     private JComboBox<Cliente> comboClientes;
     private JComboBox<Veiculo> comboVeiculos;
     private DatePicker pickerDataSaida, pickerDataPrevistaDevolucao, pickerDataDevolucaoEfetiva;
-    private JButton btnRegistrarSaida, btnRegistrarDevolucao;
-    private JTable tabelaAlugueisAtivos, tabelaHistorico;
-    private DefaultTableModel modeloTabelaAtivos, modeloTabelaHistorico;
+    private final JTable tabelaAlugueisAtivos, tabelaHistorico;
+    private final DefaultTableModel modeloAtivos, modeloHistorico;
+    // A referência ao painel de veículos ainda é útil, mas não para o método que
+    // causava erro.
+    @SuppressWarnings("unused")
     private final PainelGerenciamentoVeiculos painelVeiculosRef;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public PainelGerenciamentoAlugueis(PainelGerenciamentoVeiculos painelVeiculosRef) {
-        super(new BorderLayout(10, 10));
+        super(new BorderLayout(20, 20));
         this.painelVeiculosRef = painelVeiculosRef;
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        initComponents();
-        setupListeners();
-        atualizarDados();
-    }
+        setBorder(new EmptyBorder(20, 30, 20, 30));
+        setBackground(UIDesigner.COLOR_BACKGROUND);
 
-    private void initComponents() {
-        JPanel painelRegistros = new JPanel(new GridLayout(1, 2, 20, 0));
-        painelRegistros.add(createPainelSaida());
-        painelRegistros.add(createPainelDevolucao());
+        JLabel titulo = new JLabel("Gerenciar Aluguéis");
+        titulo.setFont(UIDesigner.FONT_TITLE);
+        titulo.setForeground(UIDesigner.COLOR_FOREGROUND);
+        add(titulo, BorderLayout.NORTH);
 
-        JTabbedPane painelComAbas = new JTabbedPane();
-        String[] colunas = { "ID", "Cliente", "Veículo", "Data Saída", "Previsão", "Devolução", "Multa", "Valor Total",
-                "Status" };
+        JPanel painelFormularios = new JPanel(new GridLayout(1, 2, 20, 20));
+        painelFormularios.setOpaque(false);
+        painelFormularios.add(createPainelSaida());
+        painelFormularios.add(createPainelDevolucao());
 
-        modeloTabelaAtivos = new DefaultTableModel(colunas, 0) {
-            @Override
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
-        };
-        tabelaAlugueisAtivos = new JTable(modeloTabelaAtivos);
+        JTabbedPane painelTabelas = new JTabbedPane();
+
+        modeloAtivos = new DefaultTableModel(new String[] { "ID", "Cliente", "Veículo", "Saída", "Previsão" }, 0);
+        tabelaAlugueisAtivos = new JTable(modeloAtivos);
         tabelaAlugueisAtivos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        painelComAbas.addTab("Aluguéis Ativos", new JScrollPane(tabelaAlugueisAtivos));
+        JScrollPane scrollAtivos = new JScrollPane(tabelaAlugueisAtivos);
 
-        modeloTabelaHistorico = new DefaultTableModel(colunas, 0) {
-            @Override
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
-        };
-        tabelaHistorico = new JTable(modeloTabelaHistorico);
-        tabelaHistorico.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        painelComAbas.addTab("Histórico de Locações", new JScrollPane(tabelaHistorico));
+        modeloHistorico = new DefaultTableModel(new String[] { "ID", "Cliente", "Veículo", "Status", "Valor Total" },
+                0);
+        tabelaHistorico = new JTable(modeloHistorico);
+        JScrollPane scrollHistorico = new JScrollPane(tabelaHistorico);
 
-        add(painelRegistros, BorderLayout.NORTH);
-        add(painelComAbas, BorderLayout.CENTER);
+        painelTabelas.addTab("Aluguéis Ativos", scrollAtivos);
+        painelTabelas.addTab("Histórico de Locações", scrollHistorico);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, painelFormularios, painelTabelas);
+        splitPane.setDividerLocation(280);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setOpaque(false);
+
+        add(splitPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Cria o card para registrar a saída de um veículo.
+     */
     private JPanel createPainelSaida() {
-        JPanel painel = new JPanel(new GridBagLayout());
-        painel.setBorder(BorderFactory.createTitledBorder("Registrar Saída de Veículo"));
+        JPanel painel = new JPanel(new BorderLayout(15, 15));
+        painel.setBorder(UIDesigner.BORDER_CARD);
+        painel.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
+
+        JLabel titulo = new JLabel("Registrar Saída de Veículo");
+        titulo.setFont(UIDesigner.FONT_SUBTITLE);
+        titulo.setForeground(UIDesigner.COLOR_FOREGROUND);
+        painel.add(titulo, BorderLayout.NORTH);
+
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(8, 0, 8, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
+        gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridx = 0;
         gbc.weightx = 0;
-        painel.add(new JLabel("Cliente:"), gbc);
+        formPanel.add(new JLabel("Cliente:"), gbc);
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 1;
         comboClientes = new JComboBox<>();
-        painel.add(comboClientes, gbc);
+        formPanel.add(comboClientes, gbc);
 
-        gbc.gridy++;
         gbc.gridx = 0;
+        gbc.gridy++;
         gbc.weightx = 0;
-        painel.add(new JLabel("Veículo:"), gbc);
+        formPanel.add(new JLabel("Veículo:"), gbc);
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 1;
         comboVeiculos = new JComboBox<>();
-        painel.add(comboVeiculos, gbc);
+        formPanel.add(comboVeiculos, gbc);
 
-        gbc.gridy++;
         gbc.gridx = 0;
+        gbc.gridy++;
         gbc.weightx = 0;
-        painel.add(new JLabel("Data Saída:"), gbc);
+        formPanel.add(new JLabel("Data Saída:"), gbc);
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 1;
         DatePickerSettings settingsSaida = new DatePickerSettings();
-        settingsSaida.setAllowKeyboardEditing(false);
         pickerDataSaida = new DatePicker(settingsSaida);
-        // CORREÇÃO: Definir limites DEPOIS de criar o DatePicker
         pickerDataSaida.getSettings().setDateRangeLimits(LocalDate.now(), null);
         pickerDataSaida.setDateToToday();
-        painel.add(pickerDataSaida, gbc);
+        formPanel.add(pickerDataSaida, gbc);
 
-        gbc.gridy++;
         gbc.gridx = 0;
+        gbc.gridy++;
         gbc.weightx = 0;
-        painel.add(new JLabel("Previsão Devolução:"), gbc);
+        formPanel.add(new JLabel("Previsão Devolução:"), gbc);
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 1;
         DatePickerSettings settingsPrevista = new DatePickerSettings();
-        settingsPrevista.setAllowKeyboardEditing(false);
         pickerDataPrevistaDevolucao = new DatePicker(settingsPrevista);
-        pickerDataPrevistaDevolucao.getSettings().setDateRangeLimits(
-                pickerDataSaida.getDate().plusDays(1), null);
-        pickerDataPrevistaDevolucao.setDate(pickerDataSaida.getDate().plusDays(7));
-        painel.add(pickerDataPrevistaDevolucao, gbc);
+        pickerDataPrevistaDevolucao.setDate(LocalDate.now().plusDays(7));
+        formPanel.add(pickerDataPrevistaDevolucao, gbc);
 
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE;
-        btnRegistrarSaida = new JButton("Registrar Saída");
-        painel.add(btnRegistrarSaida, gbc);
+        painel.add(formPanel, BorderLayout.CENTER);
+
+        JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Saída", "icons/rental.svg");
+        btnRegistrar.addActionListener(e -> registrarSaida());
+        painel.add(btnRegistrar, BorderLayout.SOUTH);
+
         return painel;
     }
 
+    /**
+     * Cria o card para registrar a devolução de um veículo.
+     */
     private JPanel createPainelDevolucao() {
-        JPanel painel = new JPanel(new GridBagLayout());
-        painel.setBorder(BorderFactory.createTitledBorder("Registrar Devolução"));
+        JPanel painel = new JPanel(new BorderLayout(15, 15));
+        painel.setBorder(UIDesigner.BORDER_CARD);
+        painel.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
+
+        JLabel titulo = new JLabel("Registrar Devolução");
+        titulo.setFont(UIDesigner.FONT_SUBTITLE);
+        titulo.setForeground(UIDesigner.COLOR_FOREGROUND);
+        painel.add(titulo, BorderLayout.NORTH);
+
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(8, 0, 8, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
+        gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
-        painel.add(new JLabel("Selecione um aluguel ativo na tabela."), gbc);
-
-        gbc.gridy++;
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
         gbc.weightx = 0;
-        painel.add(new JLabel("Data Devolução:"), gbc);
+        formPanel.add(new JLabel("Data Devolução:"), gbc);
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        DatePickerSettings settingsDevolucao = new DatePickerSettings();
-        settingsDevolucao.setAllowKeyboardEditing(false);
-        pickerDataDevolucaoEfetiva = new DatePicker(settingsDevolucao);
+        gbc.weightx = 1;
+        DatePickerSettings settingsDev = new DatePickerSettings();
+        pickerDataDevolucaoEfetiva = new DatePicker(settingsDev);
         pickerDataDevolucaoEfetiva.setDateToToday();
-        painel.add(pickerDataDevolucaoEfetiva, gbc);
+        formPanel.add(pickerDataDevolucaoEfetiva, gbc);
 
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE;
-        btnRegistrarDevolucao = new JButton("Registrar Devolução");
-        painel.add(btnRegistrarDevolucao, gbc);
+        JLabel infoLabel = new JLabel(
+                "<html>Selecione um aluguel na tabela 'Ativos' abaixo para registrar a devolução.</html>");
+        infoLabel.setForeground(UIDesigner.COLOR_TEXT_SECONDARY);
+        painel.add(infoLabel, BorderLayout.CENTER);
 
-        gbc.gridy++;
-        JLabel lblAvisoJuros = new JLabel("<html><i>Atrasos na devolução geram juros de 10% ao dia.</i></html>");
-        lblAvisoJuros.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        painel.add(lblAvisoJuros, gbc);
+        JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Devolução", "icons/check.svg");
+        btnRegistrar.addActionListener(e -> registrarDevolucao());
+
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.setOpaque(false);
+        southPanel.add(formPanel, BorderLayout.NORTH);
+        southPanel.add(btnRegistrar, BorderLayout.CENTER);
+        painel.add(southPanel, BorderLayout.SOUTH);
 
         return painel;
     }
 
-    private void setupListeners() {
-        btnRegistrarSaida.addActionListener(e -> registrarSaida());
-        btnRegistrarDevolucao.addActionListener(e -> registrarDevolucao());
+    /**
+     * Carrega e atualiza todos os dados exibidos no painel (combos e tabelas).
+     */
+    public void atualizarDados() {
+        comboClientes.removeAllItems();
+        GerenciadorClientes.carregarClientes().forEach(comboClientes::addItem);
 
-        pickerDataSaida.addDateChangeListener(e -> {
-            LocalDate dataSaida = pickerDataSaida.getDate();
-            if (dataSaida != null) {
-                LocalDate dataMinimaDevolucao = dataSaida.plusDays(1);
-                pickerDataPrevistaDevolucao.getSettings().setDateRangeLimits(dataMinimaDevolucao, null);
-                if (pickerDataPrevistaDevolucao.getDate() != null
-                        && pickerDataPrevistaDevolucao.getDate().isBefore(dataMinimaDevolucao)) {
-                    pickerDataPrevistaDevolucao.setDate(dataMinimaDevolucao);
-                }
+        comboVeiculos.removeAllItems();
+        GerenciadorVeiculos.carregarVeiculos().stream()
+                .filter(v -> "Disponível".equals(v.getStatus()))
+                .forEach(comboVeiculos::addItem);
+
+        modeloAtivos.setRowCount(0);
+        modeloHistorico.setRowCount(0);
+
+        List<Aluguel> alugueis = GerenciadorAlugueis.carregarAlugueis();
+        List<Cliente> clientes = GerenciadorClientes.carregarClientes();
+        List<Veiculo> veiculos = GerenciadorVeiculos.carregarVeiculos();
+
+        for (Aluguel aluguel : alugueis) {
+            String nomeCliente = clientes.stream().filter(c -> c.getCpf().equals(aluguel.getCpfCliente())).findFirst()
+                    .map(Cliente::getNome).orElse("N/A");
+            String descVeiculo = veiculos.stream().filter(v -> v.getPlaca().equals(aluguel.getPlacaVeiculo()))
+                    .findFirst().map(Object::toString).orElse("N/A");
+
+            if ("Ativo".equals(aluguel.getStatusAluguel())) {
+                modeloAtivos.addRow(new Object[] { aluguel.getIdAluguel(), nomeCliente, descVeiculo,
+                        aluguel.getDataSaida(), aluguel.getDataPrevistaDevolucao() });
+            } else {
+                modeloHistorico.addRow(new Object[] { aluguel.getIdAluguel(), nomeCliente, descVeiculo,
+                        aluguel.getStatusAluguel(), String.format("R$ %.2f", aluguel.getValorTotal()) });
             }
-        });
+        }
     }
 
+    /**
+     * Valida e executa o processo de registrar a saída de um veículo.
+     */
     private void registrarSaida() {
         Cliente cliente = (Cliente) comboClientes.getSelectedItem();
         Veiculo veiculo = (Veiculo) comboVeiculos.getSelectedItem();
@@ -215,15 +253,20 @@ public final class PainelGerenciamentoAlugueis extends JPanel {
         LocalDate dataPrevista = pickerDataPrevistaDevolucao.getDate();
 
         if (cliente == null || veiculo == null || dataSaida == null || dataPrevista == null) {
-            JOptionPane.showMessageDialog(this, "Todos os campos para registrar a saída são obrigatórios.",
+            JOptionPane.showMessageDialog(this, "Todos os campos são obrigatórios.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (dataPrevista.isBefore(dataSaida) || dataPrevista.isEqual(dataSaida)) {
+            JOptionPane.showMessageDialog(this, "A data de devolução prevista deve ser posterior à data de saída.",
                     "Erro de Validação", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        List<Aluguel> alugueis = GerenciadorAlugueis.carregarAlugueis();
-        Aluguel novoAluguel = new Aluguel(veiculo.getPlaca(), cliente.getCpf(),
-                dataSaida.format(formatter), dataPrevista.format(formatter));
+        Aluguel novoAluguel = new Aluguel(veiculo.getPlaca(), cliente.getCpf(), dataSaida.format(formatter),
+                dataPrevista.format(formatter));
         novoAluguel.setPrecoDiaria(veiculo.getPrecoDiaria());
+
+        List<Aluguel> alugueis = GerenciadorAlugueis.carregarAlugueis();
         alugueis.add(novoAluguel);
         GerenciadorAlugueis.salvarAlugueis(alugueis);
 
@@ -234,90 +277,64 @@ public final class PainelGerenciamentoAlugueis extends JPanel {
         JOptionPane.showMessageDialog(this, "Saída registrada com sucesso!", "Sucesso",
                 JOptionPane.INFORMATION_MESSAGE);
         atualizarDados();
-        painelVeiculosRef.carregarVeiculosNaTabela();
+        // A linha abaixo foi removida para corrigir o erro de compilação.
+        // A atualização do painel de veículos agora é gerenciada pela JanelaPrincipal.
+        // painelVeiculosRef.carregarVeiculos();
     }
 
+    /**
+     * Valida e executa o processo de registrar a devolução de um veículo.
+     */
     private void registrarDevolucao() {
-        int linha = tabelaAlugueisAtivos.getSelectedRow();
-        if (linha == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Selecione um aluguel na tabela de 'Aluguéis Ativos' para registrar a devolução.", "Aviso",
+        int selectedRow = tabelaAlugueisAtivos.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione um aluguel ativo na tabela.", "Aviso",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int idAluguel = (int) modeloTabelaAtivos.getValueAt(tabelaAlugueisAtivos.convertRowIndexToModel(linha), 0);
+
+        int idAluguel = (int) modeloAtivos.getValueAt(selectedRow, 0);
         LocalDate dataDevolucao = pickerDataDevolucaoEfetiva.getDate();
 
         if (dataDevolucao == null) {
-            JOptionPane.showMessageDialog(this, "A data de devolução é obrigatória.", "Erro de Validação",
+            JOptionPane.showMessageDialog(this, "A data de devolução é obrigatória.", "Erro",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         List<Aluguel> alugueis = GerenciadorAlugueis.carregarAlugueis();
-        alugueis.stream().filter(a -> a.getIdAluguel() == idAluguel).findFirst().ifPresent(aluguel -> {
+        Optional<Aluguel> aluguelOpt = alugueis.stream().filter(a -> a.getIdAluguel() == idAluguel).findFirst();
+
+        if (aluguelOpt.isPresent()) {
+            Aluguel aluguel = aluguelOpt.get();
 
             LocalDate dataSaida = LocalDate.parse(aluguel.getDataSaida(), formatter);
             if (dataDevolucao.isBefore(dataSaida)) {
-                JOptionPane.showMessageDialog(this, "A data de devolução não pode ser anterior à data de saída.",
-                        "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "A data de devolução não pode ser anterior à data de saída do aluguel.", "Erro de Validação",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             List<Veiculo> veiculos = GerenciadorVeiculos.carregarVeiculos();
-            veiculos.stream().filter(v -> v.getPlaca().equals(aluguel.getPlacaVeiculo())).findFirst()
-                    .ifPresent(veiculo -> {
-                        aluguel.finalizarAluguel(dataDevolucao.format(formatter), veiculo.getPrecoDiaria());
-                        veiculo.devolver();
+            Optional<Veiculo> veiculoOpt = veiculos.stream()
+                    .filter(v -> v.getPlaca().equals(aluguel.getPlacaVeiculo())).findFirst();
 
-                        GerenciadorAlugueis.salvarAlugueis(alugueis);
-                        GerenciadorVeiculos.salvarVeiculos(veiculos);
+            if (veiculoOpt.isPresent()) {
+                Veiculo veiculo = veiculoOpt.get();
+                aluguel.finalizarAluguel(dataDevolucao.format(formatter), veiculo.getPrecoDiaria());
+                veiculo.devolver();
 
-                        String msg = String.format("Devolução registrada! Valor Total: R$ %.2f",
-                                aluguel.getValorTotal());
-                        if (aluguel.getValorMulta() > 0) {
-                            msg += String.format(" (inclui R$ %.2f de multa por atraso)", aluguel.getValorMulta());
-                        }
-                        JOptionPane.showMessageDialog(this, msg, "Devolução Concluída",
-                                JOptionPane.INFORMATION_MESSAGE);
+                GerenciadorAlugueis.salvarAlugueis(alugueis);
+                GerenciadorVeiculos.salvarVeiculos(veiculos);
 
-                        atualizarDados();
-                        painelVeiculosRef.carregarVeiculosNaTabela();
-                    });
-        });
-    }
+                String msg = String.format("Devolução registrada! Valor Total: R$ %.2f", aluguel.getValorTotal());
+                JOptionPane.showMessageDialog(this, msg, "Devolução Concluída", JOptionPane.INFORMATION_MESSAGE);
 
-    public void atualizarDados() {
-        comboClientes.removeAllItems();
-        GerenciadorClientes.carregarClientes().forEach(comboClientes::addItem);
-
-        comboVeiculos.removeAllItems();
-        GerenciadorVeiculos.carregarVeiculos().stream()
-                .filter(v -> "Disponível".equals(v.getStatus()))
-                .forEach(comboVeiculos::addItem);
-
-        modeloTabelaAtivos.setRowCount(0);
-        modeloTabelaHistorico.setRowCount(0);
-        List<Aluguel> todosAlugueis = GerenciadorAlugueis.carregarAlugueis();
-        List<Cliente> todosClientes = GerenciadorClientes.carregarClientes();
-        List<Veiculo> todosVeiculos = GerenciadorVeiculos.carregarVeiculos();
-
-        for (Aluguel a : todosAlugueis) {
-            String nomeCliente = todosClientes.stream().filter(c -> c.getCpf().equals(a.getCpfCliente())).findFirst()
-                    .map(Cliente::getNome).orElse("N/A");
-            String descVeiculo = todosVeiculos.stream().filter(v -> v.getPlaca().equals(a.getPlacaVeiculo()))
-                    .findFirst().map(Veiculo::toString).orElse("N/A");
-            Object[] linha = {
-                    a.getIdAluguel(), nomeCliente, descVeiculo, a.getDataSaida(), a.getDataPrevistaDevolucao(),
-                    a.getDataDevolucaoEfetiva() != null ? a.getDataDevolucaoEfetiva() : "---",
-                    a.getValorMulta() > 0 ? String.format("R$ %.2f", a.getValorMulta()) : "---",
-                    a.getValorTotal() > 0 ? String.format("R$ %.2f", a.getValorTotal()) : "---",
-                    a.getStatusAluguel()
-            };
-            if ("Ativo".equals(a.getStatusAluguel())) {
-                modeloTabelaAtivos.addRow(linha);
-            } else {
-                modeloTabelaHistorico.addRow(linha);
+                atualizarDados();
+                // A linha abaixo foi removida para corrigir o erro de compilação.
+                // A atualização do painel de veículos agora é gerenciada pela JanelaPrincipal.
+                // painelVeiculosRef.carregarVeiculos();
             }
         }
     }
