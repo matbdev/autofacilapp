@@ -32,79 +32,80 @@ O projeto é construído com Java e gerenciado pelo Maven. As principais depend�
 | **OkHttp** | 4.12.0 | Cliente HTTP para realizar as chamadas à API da FIPE de forma eficiente. |
 | **JUnit** | 4.11 | Framework para a escrita e execução de testes de unidade. |
 
-## 📂 Estrutura do Projeto
+## 📦 Estrutura do Projeto
 O projeto segue uma arquitetura bem definida, separando as responsabilidades em diferentes pacotes. Abaixo está a árvore completa de arquivos e diretórios:
 
-C:.
-│   .gitignore
-│   dependency-reduced-pom.xml
-│   pom.xml
-│
-├───registros
-│       alugueis.json
-│       clientes.json
-│       veiculos.json
-│
-├───src
-│   ├───main
-│   │   ├───java
-│   │   │   └───br
-│   │   │       └───univates
-│   │   │           └───universo
-│   │   │               │   Main.java
-│   │   │               │
-│   │   │               ├───core
-│   │   │               │       Aluguel.java
-│   │   │               │       Cliente.java
-│   │   │               │       Veiculo.java
-│   │   │               │
-│   │   │               ├───data
-│   │   │               │       GerenciadorAlugueis.java
-│   │   │               │       GerenciadorClientes.java
-│   │   │               │       GerenciadorVeiculos.java
-│   │   │               │       JsonDataManager.java
-│   │   │               │
-│   │   │               ├───gui
-│   │   │               │       JanelaPrincipal.java
-│   │   │               │       PainelDashboard.java
-│   │   │               │       PainelGerenciamentoAlugueis.java
-│   │   │               │       PainelGerenciamentoClientes.java
-│   │   │               │       PainelGerenciamentoVeiculos.java
-│   │   │               │
-│   │   │               └───util
-│   │   │                       CpfDocumentFilter.java
-│   │   │                       CpfValidator.java
-│   │   │                       FipeApiClient.java
-│   │   │                       FipeItem.java
-│   │   │                       NomeDocumentFilter.java
-│   │   │                       PlacaDocumentFilter.java
-│   │   │                       TelefoneDocumentFilter.java
-│   │   │                       UIDesigner.java
-│   │   │                       WrapLayout.java
-│   │   │
-│   │   └───resources
-│   │       └───icons
-│   │               add.png
-│   │               car.png
-│   │               check.png
-│   │               customer.png
-│   │               dashboard.png
-│   │               delete.png
-│   │               rental.png
-│   │               save.png
-│   │               user.png
-│   │               vehicle.png
-│   │
-│   └───test
-│       └───java
-│           └───br
-│               └───univates
-│                   └───universo
-│                       │   (Estrutura de pacotes de teste espelhando /src/main/java)
-│
-└───target
-│   AutoFacilApp.jar
-│   (Outros arquivos e pastas gerados pelo build do Maven)
+### 🔹 Arquivos na Raiz
+
+├── .gitignore                       # Arquivos e pastas ignorados pelo Git
+├── pom.xml                          # Arquivo principal do Maven (build, dependências, plugins)
+├── dependency-reduced-pom.xml       # Pom gerado após o empacotamento (shaded JAR)
+
+
+### 📁 registros (aparecem assim que dados forem adicionados)
+Arquivos JSON com os dados persistidos da aplicação:
+
+├── alugueis.json
+├── clientes.json
+└── veiculos.json
+
+### 📁 src
+Dividido em main e test -> o main serve para armazenar o projeto estável, enquanto o main é destinado para testes
+No momento em que clonar o repositório, ambas estruturas estarão indênticas
+
+└── main/test
+    ├── java
+    │   └── br.univates.universo
+    │       ├── Main.java                    # Classe principal
+    │
+    │       ├── core                         # Modelos de domínio
+    │       │   ├── Aluguel.java
+    │       │   ├── Cliente.java
+    │       │   └── Veiculo.java
+    │
+    │       ├── data                         # Camada de persistência
+    │       │   ├── GerenciadorAlugueis.java
+    │       │   ├── GerenciadorClientes.java
+    │       │   ├── GerenciadorVeiculos.java
+    │       │   └── JsonDataManager.java
+    │
+    │       ├── gui                          # Interface gráfica (Swing)
+    │       │   ├── JanelaPrincipal.java
+    │       │   ├── PainelDashboard.java
+    │       │   ├── PainelGerenciamentoAlugueis.java
+    │       │   ├── PainelGerenciamentoClientes.java
+    │       │   └── PainelGerenciamentoVeiculos.java
+    │
+    │       └── util                         # Utilitários e validadores
+    │           ├── CpfDocumentFilter.java
+    │           ├── CpfValidator.java
+    │           ├── FipeApiClient.java
+    │           ├── FipeItem.java
+    │           ├── NomeDocumentFilter.java
+    │           ├── PlacaDocumentFilter.java
+    │           ├── TelefoneDocumentFilter.java
+    │           ├── UIDesigner.java
+    │           └── WrapLayout.java
+    │
+    └── resources
+        └── icons                           # Ícones da aplicação
+            ├── add.png
+            ├── car.png
+            ├── check.png
+            ├── customer.png
+            ├── dashboard.png
+            ├── delete.png
+            ├── rental.png
+            ├── save.png
+            ├── user.png
+            └── vehicle.png
+
+### 📁 target
+Arquivos gerados após o build com Maven. No momento em que buildar o projeto com o maven, aparecerão os demais arquivos.
+
+├── AutoFacilApp.jar
+└── (outros arquivos compilados)
+
 
 - **`core`**: Contém as classes que representam as entidades do sistema: `Veiculo`, `Cliente` e `Aluguel`.
 - **`data`**: Responsável pela persistência dos dados. O `JsonDataManager` é a classe central que salva e carrega os dados nos arquivos `.json` localizados na pasta `registros`.
@@ -140,9 +141,9 @@ Para compilar e executar o projeto, você precisará ter o **JDK 21** e o **Mave
 - **Gerenciamento de Dependências**: O uso do Maven com o `pom.xml` torna o gerenciamento de bibliotecas externas simples e declarativo.
 - **Imutabilidade**: Campos que não devem ser alterados após a criação de um objeto (como `placa` em `Veiculo` e `cpf` em `Cliente`) são declarados como `final`, uma boa prática de programação segura.
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
 | Nome | Curso | Semestre | Cadeira | Professor |
 | :--- | :--- | :--- |:--- |:--- |
-| **Mateus Carniel Brambilla** | Engenharia de Software | 1º | LABORATÓRIO DE LÓGICA DE PROGRAMAÇÃO | LUIS ANTONIO SCHNEIDERS |
+| **Mateus Carniel Brambilla e Gustavo Schneider Garcia** | Engenharia de Software | 1º | LABORATÓRIO DE LÓGICA DE PROGRAMAÇÃO | LUIS ANTONIO SCHNEIDERS |
 

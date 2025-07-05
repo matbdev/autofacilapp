@@ -1,4 +1,13 @@
-# Fazendo com que o Git não observe as seguintes pastas e seus conteúdos
-registros/*
+# # Dados de Execução
+# Ignora a pasta de registros que armazena os dados do usuário em tempo de execução.
+registros/
+
+# # Arquivos de Build do Maven
+# Ignora todo o diretório 'target', que contém os arquivos compilados.
 target/*
-*.xml
+# MANTÉM o JAR final ("Fat JAR") que é o executável da aplicação.
+!target/AutoFacilApp.jar
+
+# # Arquivos de Configuração e Build
+# Ignora o pom.xml reduzido que o Maven gera, mas MANTÉM o pom.xml original.
+dependency-reduced-pom.xml
