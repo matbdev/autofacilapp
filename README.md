@@ -69,9 +69,7 @@ registros/
 
 ---
 
-
 ### 📁 src
-
 Dividido em `main` e `test`. Ambos possuem a mesma estrutura — o primeiro contém o projeto estável e o segundo os testes unitários.
 
 ```text
@@ -119,11 +117,7 @@ src/
     └── java/br/univates/universo/
         └── (estrutura espelhada para testes)
 ```
-
 ---
-
-
-
 ### 📁 target
 
 Gerado automaticamente após a execução do Maven (`mvn clean package`).
@@ -133,9 +127,7 @@ target/
 ├── AutoFacilApp.jar
 └── (outros arquivos de build)
 ```
-
 <hr>
-
 
 
 - **`core`**: Contém as classes que representam as entidades do sistema: `Veiculo`, `Cliente` e `Aluguel`.
