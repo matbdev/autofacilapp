@@ -59,9 +59,7 @@ dependency-reduced-pom.xml
 ```text
 registros/
 ├── alugueis.json
-
 ├── clientes.json
-
 └── veiculos.json
 ```
 
@@ -135,6 +133,7 @@ target/
 - **`gui`**: Todas as classes relacionadas à interface gráfica Swing. A `JanelaPrincipal` organiza os painéis de gerenciamento (`PainelGerenciamentoVeiculos`, etc.).
 - **`util`**: Um conjunto de ferramentas que auxiliam a aplicação, incluindo o `FipeApiClient` para chamadas de API, o `UIDesigner` para a aparência e os validadores de entrada como `CpfValidator`.
 - **`registros`**: Diretório onde os dados da aplicação (veículos, clientes e aluguéis) são armazenados em formato JSON.
+
 
 ## 🚀 Como Executar
 Para compilar e executar o projeto, você precisará ter o **JDK 21** e o **Maven** instalados.
