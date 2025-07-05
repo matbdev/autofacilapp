@@ -163,7 +163,8 @@ public class PainelGerenciamentoAlugueis extends JPanel {
 
         painel.add(formPanel, BorderLayout.CENTER);
 
-        JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Saída", "icons/rental.svg");
+        // CORRIGIDO
+        JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Saída", "icons/rental.png");
         btnRegistrar.addActionListener(e -> registrarSaida());
         painel.add(btnRegistrar, BorderLayout.SOUTH);
 
@@ -213,7 +214,8 @@ public class PainelGerenciamentoAlugueis extends JPanel {
 
         painel.add(centerPanel, BorderLayout.CENTER);
 
-        JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Devolução", "icons/check.svg");
+        // CORRIGIDO
+        JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Devolução", "icons/check.png");
         btnRegistrar.addActionListener(e -> registrarDevolucao());
 
         JPanel southPanel = new JPanel(new BorderLayout());

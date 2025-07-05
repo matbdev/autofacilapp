@@ -1,5 +1,34 @@
 package br.univates.universo.gui;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.HeadlessException;
+import java.awt.Insets;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.ParseException;
+import java.util.List;
+import java.util.Optional;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.text.PlainDocument;
+
 import br.univates.universo.core.Veiculo;
 import br.univates.universo.data.GerenciadorAlugueis;
 import br.univates.universo.data.GerenciadorVeiculos;
@@ -8,19 +37,6 @@ import br.univates.universo.util.FipeItem;
 import br.univates.universo.util.PlacaDocumentFilter;
 import br.univates.universo.util.UIDesigner;
 import br.univates.universo.util.WrapLayout;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
-import javax.swing.text.PlainDocument;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.text.ParseException;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Painel para gerenciamento completo da frota de veículos.
@@ -103,7 +119,8 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         acoesCentro.add(txtBusca);
         painel.add(acoesCentro, BorderLayout.CENTER);
 
-        JButton btnAdicionar = UIDesigner.createPrimaryButton("Adicionar Veículo", "icons/add.svg");
+        // CORRIGIDO
+        JButton btnAdicionar = UIDesigner.createPrimaryButton("Adicionar Veículo", "icons/add.png");
         btnAdicionar.addActionListener(e -> mostrarPainelDetalhes(null));
         painel.add(btnAdicionar, BorderLayout.EAST);
 
@@ -254,8 +271,10 @@ public class PainelGerenciamentoVeiculos extends JPanel {
 
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         botoesPanel.setOpaque(false);
-        btnRemover = UIDesigner.createDangerButton("Remover", "icons/delete.svg");
-        btnSalvar = UIDesigner.createPrimaryButton("Salvar", "icons/save.svg");
+        // CORRIGIDO
+        btnRemover = UIDesigner.createDangerButton("Remover", "icons/delete.png");
+        // CORRIGIDO
+        btnSalvar = UIDesigner.createPrimaryButton("Salvar", "icons/save.png");
         botoesPanel.add(btnRemover);
         botoesPanel.add(btnSalvar);
         painel.add(botoesPanel, BorderLayout.SOUTH);

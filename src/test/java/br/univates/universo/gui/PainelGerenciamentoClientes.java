@@ -115,7 +115,8 @@ public class PainelGerenciamentoClientes extends JPanel {
         acoesCentro.add(txtBusca);
         painel.add(acoesCentro, BorderLayout.CENTER);
 
-        JButton btnAdicionar = UIDesigner.createPrimaryButton("Adicionar Cliente", "icons/add.svg");
+        // CORRIGIDO
+        JButton btnAdicionar = UIDesigner.createPrimaryButton("Adicionar Cliente", "icons/add.png");
         btnAdicionar.addActionListener(e -> mostrarPainelDetalhes(null));
         painel.add(btnAdicionar, BorderLayout.EAST);
 
@@ -228,8 +229,10 @@ public class PainelGerenciamentoClientes extends JPanel {
 
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         botoesPanel.setOpaque(false);
-        btnRemover = UIDesigner.createDangerButton("Remover", "icons/delete.svg");
-        btnSalvar = UIDesigner.createPrimaryButton("Salvar", "icons/save.svg");
+        // CORRIGIDO
+        btnRemover = UIDesigner.createDangerButton("Remover", "icons/delete.png");
+        // CORRIGIDO
+        btnSalvar = UIDesigner.createPrimaryButton("Salvar", "icons/save.png");
         botoesPanel.add(btnRemover);
         botoesPanel.add(btnSalvar);
         painel.add(botoesPanel, BorderLayout.SOUTH);
