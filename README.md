@@ -32,79 +32,104 @@ O projeto é construído com Java e gerenciado pelo Maven. As principais depend�
 | **OkHttp** | 4.12.0 | Cliente HTTP para realizar as chamadas à API da FIPE de forma eficiente. |
 | **JUnit** | 4.11 | Framework para a escrita e execução de testes de unidade. |
 
+<hr>
+
 ## 📦 Estrutura do Projeto
-O projeto segue uma arquitetura bem definida, separando as responsabilidades em diferentes pacotes. Abaixo está a árvore completa de arquivos e diretórios:
+
+O projeto segue uma arquitetura bem definida, separando responsabilidades em diferentes pacotes. Abaixo está a estrutura de arquivos e diretórios:
+
+---
 
 ### 🔹 Arquivos na Raiz
 
-├── .gitignore                       # Arquivos e pastas ignorados pelo Git
-├── pom.xml                          # Arquivo principal do Maven (build, dependências, plugins)
-├── dependency-reduced-pom.xml       # Pom gerado após o empacotamento (shaded JAR)
+```text
+.gitignore
+pom.xml
+dependency-reduced-pom.xml
+```
 
+- `.gitignore`: Arquivos e pastas ignorados pelo Git.
+- `pom.xml`: Arquivo principal do Maven com configurações de build e dependências.
+- `dependency-reduced-pom.xml`: Versão reduzida do POM, gerada para sombreamento (shade plugin).
 
-### 📁 registros (aparecem assim que dados forem adicionados)
-Arquivos JSON com os dados persistidos da aplicação:
+---
 
+### 📁 registros (gerado dinamicamente após uso da aplicação)
+
+```text
+registros/
 ├── alugueis.json
 ├── clientes.json
 └── veiculos.json
+```
+
+- Contém os dados persistidos da aplicação em formato JSON.
+
+---
 
 ### 📁 src
-Dividido em main e test -> o main serve para armazenar o projeto estável, enquanto o main é destinado para testes
-No momento em que clonar o repositório, ambas estruturas estarão indênticas
 
-└── main/test
-    ├── java
-    │   └── br.univates.universo
-    │       ├── Main.java                    # Classe principal
-    │
-    │       ├── core                         # Modelos de domínio
-    │       │   ├── Aluguel.java
-    │       │   ├── Cliente.java
-    │       │   └── Veiculo.java
-    │
-    │       ├── data                         # Camada de persistência
-    │       │   ├── GerenciadorAlugueis.java
-    │       │   ├── GerenciadorClientes.java
-    │       │   ├── GerenciadorVeiculos.java
-    │       │   └── JsonDataManager.java
-    │
-    │       ├── gui                          # Interface gráfica (Swing)
-    │       │   ├── JanelaPrincipal.java
-    │       │   ├── PainelDashboard.java
-    │       │   ├── PainelGerenciamentoAlugueis.java
-    │       │   ├── PainelGerenciamentoClientes.java
-    │       │   └── PainelGerenciamentoVeiculos.java
-    │
-    │       └── util                         # Utilitários e validadores
-    │           ├── CpfDocumentFilter.java
-    │           ├── CpfValidator.java
-    │           ├── FipeApiClient.java
-    │           ├── FipeItem.java
-    │           ├── NomeDocumentFilter.java
-    │           ├── PlacaDocumentFilter.java
-    │           ├── TelefoneDocumentFilter.java
-    │           ├── UIDesigner.java
-    │           └── WrapLayout.java
-    │
-    └── resources
-        └── icons                           # Ícones da aplicação
-            ├── add.png
-            ├── car.png
-            ├── check.png
-            ├── customer.png
-            ├── dashboard.png
-            ├── delete.png
-            ├── rental.png
-            ├── save.png
-            ├── user.png
-            └── vehicle.png
+Dividido em `main` e `test`. Ambos possuem a mesma estrutura — o primeiro contém o projeto estável e o segundo os testes unitários.
+
+```text
+src/
+├── main/
+│   ├── java/br/univates/universo/
+│   │   ├── Main.java
+│   │   ├── core/
+│   │   │   ├── Aluguel.java
+│   │   │   ├── Cliente.java
+│   │   │   └── Veiculo.java
+│   │   ├── data/
+│   │   │   ├── GerenciadorAlugueis.java
+│   │   │   ├── GerenciadorClientes.java
+│   │   │   ├── GerenciadorVeiculos.java
+│   │   │   └── JsonDataManager.java
+│   │   ├── gui/
+│   │   │   ├── JanelaPrincipal.java
+│   │   │   ├── PainelDashboard.java
+│   │   │   ├── PainelGerenciamentoAlugueis.java
+│   │   │   ├── PainelGerenciamentoClientes.java
+│   │   │   └── PainelGerenciamentoVeiculos.java
+│   │   └── util/
+│   │       ├── CpfDocumentFilter.java
+│   │       ├── CpfValidator.java
+│   │       ├── FipeApiClient.java
+│   │       ├── FipeItem.java
+│   │       ├── NomeDocumentFilter.java
+│   │       ├── PlacaDocumentFilter.java
+│   │       ├── TelefoneDocumentFilter.java
+│   │       ├── UIDesigner.java
+│   │       └── WrapLayout.java
+│   └── resources/icons/
+│       ├── add.png
+│       ├── car.png
+│       ├── check.png
+│       ├── customer.png
+│       ├── dashboard.png
+│       ├── delete.png
+│       ├── rental.png
+│       ├── save.png
+│       ├── user.png
+│       └── vehicle.png
+└── test/
+    └── java/br/univates/universo/
+        └── (estrutura espelhada para testes)
+```
+
+---
 
 ### 📁 target
-Arquivos gerados após o build com Maven. No momento em que buildar o projeto com o maven, aparecerão os demais arquivos.
 
+Gerado automaticamente após a execução do Maven (`mvn clean package`).
+
+```text
+target/
 ├── AutoFacilApp.jar
-└── (outros arquivos compilados)
+└── (outros arquivos de build)
+```
+
+<hr>
 
 
 - **`core`**: Contém as classes que representam as entidades do sistema: `Veiculo`, `Cliente` e `Aluguel`.
