@@ -2,6 +2,9 @@
 # Ignora a pasta de registros que armazena os dados do usuário em tempo de execução.
 registros/
 
+# Ignora pasta com executável
+build/
+
 # # Arquivos de Build do Maven
 # Ignora todo o diretório 'target', que contém os arquivos compilados.
 target/*
