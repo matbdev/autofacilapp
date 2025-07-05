@@ -59,13 +59,16 @@ dependency-reduced-pom.xml
 ```text
 registros/
 ├── alugueis.json
+
 ├── clientes.json
+
 └── veiculos.json
 ```
 
 - Contém os dados persistidos da aplicação em formato JSON.
 
 ---
+
 
 ### 📁 src
 
@@ -119,6 +122,8 @@ src/
 
 ---
 
+
+
 ### 📁 target
 
 Gerado automaticamente após a execução do Maven (`mvn clean package`).
@@ -130,6 +135,7 @@ target/
 ```
 
 <hr>
+
 
 
 - **`core`**: Contém as classes que representam as entidades do sistema: `Veiculo`, `Cliente` e `Aluguel`.
