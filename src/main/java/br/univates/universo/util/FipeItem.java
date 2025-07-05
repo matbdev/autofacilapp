@@ -12,8 +12,8 @@ import java.util.Objects;
  * @version 1.0
  */
 public class FipeItem {
-    private final String code;
-    private final String name;
+    private final String code; // Na API é "codigo"
+    private final String name; // Na API é "nome"
 
     public FipeItem(String code, String name) {
         this.code = code;

@@ -3,9 +3,11 @@ package br.univates.universo.util;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Font;
+import java.awt.Image; // Importação adicionada
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.ImageIcon; // Importação adicionada
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
@@ -13,11 +15,13 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+// A importação do FlatSVGIcon foi removida pois não é mais necessária.
+// import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 /**
  * Classe utilitária para centralizar o design e estilo da aplicação.
  * Fornece cores, fontes e métodos para criar componentes estilizados.
+ * * @version 2.0 (Atualizada para usar ícones PNG)
  */
 public final class UIDesigner {
 
@@ -49,6 +53,27 @@ public final class UIDesigner {
     private UIDesigner() {
     }
 
+    /**
+     * NOVO MÉTODO: Carrega um ícone PNG do caminho especificado e o redimensiona.
+     *
+     * @param caminhoIcone O caminho para o arquivo do ícone (ex: "icons/add.png").
+     * @param largura      A largura desejada para o ícone.
+     * @param altura       A altura desejada para o ícone.
+     * @return Um objeto ImageIcon redimensionado, ou null se o ícone não for
+     *         encontrado.
+     */
+    public static ImageIcon redimensionarIconePNG(String caminhoIcone, int largura, int altura) {
+        try {
+            ImageIcon icon = new ImageIcon(UIDesigner.class.getClassLoader().getResource(caminhoIcone));
+            Image img = icon.getImage();
+            Image imgRedimensionada = img.getScaledInstance(largura, altura, Image.SCALE_SMOOTH);
+            return new ImageIcon(imgRedimensionada);
+        } catch (Exception e) {
+            System.err.println("Ícone PNG não encontrado: " + caminhoIcone);
+            return null; // Retorna nulo se o recurso não for encontrado
+        }
+    }
+
     public static JButton createPrimaryButton(String text, String iconPath) {
         JButton button = new JButton(text);
         button.setFont(FONT_BUTTON);
@@ -58,7 +83,8 @@ public final class UIDesigner {
         button.setFocusPainted(false);
         button.setBorder(new EmptyBorder(10, 20, 10, 20));
         if (iconPath != null) {
-            button.setIcon(new FlatSVGIcon(iconPath, 16, 16));
+            // ALTERADO: Usa o novo método para redimensionar ícones PNG
+            button.setIcon(redimensionarIconePNG(iconPath, 16, 16));
         }
         return button;
     }
@@ -72,7 +98,8 @@ public final class UIDesigner {
         button.setFocusPainted(false);
         button.setBorder(new EmptyBorder(10, 20, 10, 20));
         if (iconPath != null) {
-            button.setIcon(new FlatSVGIcon(iconPath, 16, 16));
+            // ALTERADO: Usa o novo método para redimensionar ícones PNG
+            button.setIcon(redimensionarIconePNG(iconPath, 16, 16));
         }
         return button;
     }
@@ -94,7 +121,8 @@ public final class UIDesigner {
 
     public static JButton createNavButton(String text, String iconPath) {
         JButton button = new JButton(text);
-        button.setIcon(new FlatSVGIcon(iconPath, 20, 20));
+        // ALTERADO: Usa o novo método para redimensionar ícones PNG
+        button.setIcon(redimensionarIconePNG(iconPath, 20, 20));
         button.setHorizontalAlignment(JButton.LEFT);
         button.setFont(FONT_SUBTITLE);
         button.setForeground(COLOR_TEXT_SECONDARY);

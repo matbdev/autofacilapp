@@ -1,1 +1,3 @@
+# Fazendo com que o Git não observe as seguintes pastas e seus conteúdos
+registros/*
 target/*

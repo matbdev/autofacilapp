@@ -23,6 +23,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import javax.swing.text.PlainDocument;
 
 import br.univates.universo.core.Cliente;
@@ -39,7 +43,7 @@ import br.univates.universo.util.WrapLayout;
  * Apresenta uma interface moderna com visualização em cards e um painel
  * de detalhes contextual para adição e edição.
  *
- * @version 3.0
+ * @version 3.1 (Modificado)
  */
 public class PainelGerenciamentoClientes extends JPanel {
     private List<Cliente> listaCompletaClientes;
@@ -71,19 +75,11 @@ public class PainelGerenciamentoClientes extends JPanel {
         painelDetalhes.setVisible(false);
     }
 
-    /**
-     * Carrega a lista de clientes do arquivo e atualiza a exibição.
-     */
     public void carregarClientes() {
         this.listaCompletaClientes = GerenciadorClientes.carregarClientes();
         filtrarClientes("");
     }
 
-    /**
-     * Filtra e exibe os clientes com base em um termo de busca.
-     * 
-     * @param termo O texto a ser buscado no nome ou CPF do cliente.
-     */
     private void filtrarClientes(String termo) {
         painelCards.removeAll();
         termo = termo.toLowerCase();
@@ -96,10 +92,8 @@ public class PainelGerenciamentoClientes extends JPanel {
         painelCards.repaint();
     }
 
-    /**
-     * Cria o painel superior contendo o título e os botões de ação principal.
-     */
     private JPanel createPainelAcoes() {
+        // ... (código original sem alterações)
         JPanel painel = new JPanel(new BorderLayout(20, 20));
         painel.setOpaque(false);
 
@@ -128,13 +122,8 @@ public class PainelGerenciamentoClientes extends JPanel {
         return painel;
     }
 
-    /**
-     * Cria um card visual para representar um único cliente.
-     * 
-     * @param cliente O objeto Cliente a ser exibido.
-     * @return Um JPanel estilizado como um card.
-     */
     private JPanel createClienteCard(Cliente cliente) {
+        // ... (código original sem alterações)
         JPanel card = new JPanel(new BorderLayout(5, 5));
         card.setBorder(UIDesigner.BORDER_CARD);
         card.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
@@ -171,10 +160,6 @@ public class PainelGerenciamentoClientes extends JPanel {
         return card;
     }
 
-    /**
-     * Cria o painel lateral de detalhes/formulário para adicionar ou editar
-     * clientes.
-     */
     private JPanel createPainelDetalhes() {
         JPanel painel = new JPanel(new BorderLayout(15, 15));
         painel.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
@@ -213,10 +198,20 @@ public class PainelGerenciamentoClientes extends JPanel {
         formPanel.add(new JLabel("Nome Completo"), gbc);
         gbc.gridy++;
         txtNome = new JTextField();
+        // NOVO: Adiciona um DocumentFilter para não permitir números no nome
+        ((AbstractDocument) txtNome.getDocument()).setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                    throws BadLocationException {
+                if (text.matches("[^0-9]*")) {
+                    super.replace(fb, offset, length, text, attrs);
+                }
+            }
+        });
         formPanel.add(txtNome, gbc);
         gbc.gridy++;
 
-        formPanel.add(new JLabel("Telefone"), gbc);
+        formPanel.add(new JLabel("Telefone (com DDD)"), gbc);
         gbc.gridy++;
         txtTelefone = new JTextField();
         ((PlainDocument) txtTelefone.getDocument()).setDocumentFilter(new TelefoneDocumentFilter());
@@ -245,17 +240,12 @@ public class PainelGerenciamentoClientes extends JPanel {
         return painel;
     }
 
-    /**
-     * Torna o painel de detalhes visível e preenche seus campos.
-     * 
-     * @param cliente O cliente a ser editado, ou null para adicionar um novo.
-     */
     private void mostrarPainelDetalhes(Cliente cliente) {
         this.clienteSelecionado = cliente;
         if (cliente != null) { // Editando
             lblTituloDetalhes.setText("Detalhes do Cliente");
             txtCpf.setText(formatCpf(cliente.getCpf()));
-            txtCpf.setEditable(false);
+            txtCpf.setEditable(false); // OK: CPF não pode ser editado
             txtNome.setText(cliente.getNome());
             txtTelefone.setText(formatTelefone(cliente.getTelefone()));
             txtEmail.setText(cliente.getEmail());
@@ -274,18 +264,24 @@ public class PainelGerenciamentoClientes extends JPanel {
         repaint();
     }
 
-    /**
-     * Valida os campos e salva um cliente novo ou atualiza um existente.
-     */
     private void salvarCliente() {
         String cpf = txtCpf.getText();
         String nome = txtNome.getText().trim();
         String telefone = txtTelefone.getText();
         String email = txtEmail.getText().trim();
 
+        String telefoneLimpo = telefone.replaceAll("[^0-9]", "");
+        String cpfLimpo = cpf.replaceAll("[^0-9]", "");
+
         if (!CpfValidator.isValid(cpf)) {
             JOptionPane.showMessageDialog(this, "O CPF informado é inválido. Verifique os dígitos.",
                     "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // NOVO: Validação do telefone para 11 dígitos
+        if (telefoneLimpo.length() != 11) {
+            JOptionPane.showMessageDialog(this, "O Telefone deve ter 11 dígitos (DDD + número).", "Erro de Validação",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (nome.isEmpty() || !isValidEmail(email)) {
@@ -293,9 +289,6 @@ public class PainelGerenciamentoClientes extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-
-        String cpfLimpo = cpf.replaceAll("[^0-9]", "");
-        String telefoneLimpo = telefone.replaceAll("[^0-9]", "");
 
         if (clienteSelecionado != null) { // Atualização
             clienteSelecionado.setNome(nome);
@@ -320,10 +313,8 @@ public class PainelGerenciamentoClientes extends JPanel {
         painelDetalhes.setVisible(false);
     }
 
-    /**
-     * Remove o cliente selecionado do sistema.
-     */
     private void removerCliente() {
+        // ... (código original sem alterações)
         if (clienteSelecionado == null)
             return;
 
@@ -350,6 +341,7 @@ public class PainelGerenciamentoClientes extends JPanel {
         }
     }
 
+    // Métodos auxiliares (formatCpf, formatTelefone, isValidEmail) sem alterações
     private boolean isValidEmail(String email) {
         if (email == null || email.isEmpty())
             return false;

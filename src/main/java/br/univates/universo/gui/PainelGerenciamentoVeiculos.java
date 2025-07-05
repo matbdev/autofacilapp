@@ -1,59 +1,52 @@
 package br.univates.universo.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import br.univates.universo.core.Veiculo;
+import br.univates.universo.data.GerenciadorAlugueis;
+import br.univates.universo.data.GerenciadorVeiculos;
+import br.univates.universo.util.FipeApiClient;
+import br.univates.universo.util.FipeItem;
+import br.univates.universo.util.PlacaDocumentFilter;
+import br.univates.universo.util.UIDesigner;
+import br.univates.universo.util.WrapLayout;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.text.PlainDocument;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
-import javax.swing.text.PlainDocument;
-
-import br.univates.universo.core.Veiculo;
-import br.univates.universo.data.GerenciadorAlugueis;
-import br.univates.universo.data.GerenciadorVeiculos;
-import br.univates.universo.util.PlacaDocumentFilter;
-import br.univates.universo.util.UIDesigner;
-import br.univates.universo.util.WrapLayout;
 
 /**
  * Painel para gerenciamento completo da frota de veículos.
  * Apresenta uma interface moderna com visualização em cards e um painel
  * de detalhes contextual para adição e edição.
  *
- * @version 3.0
+ * @version 3.4 (Com parsing robusto de FIPE)
  */
 public class PainelGerenciamentoVeiculos extends JPanel {
     private List<Veiculo> listaCompletaVeiculos;
     private final JPanel painelCards;
     private final JPanel painelDetalhes;
     private Veiculo veiculoSelecionado;
+    private final FipeApiClient fipeApiClient;
 
     // Componentes do painel de detalhes
     private JLabel lblTituloDetalhes;
-    private JTextField txtPlaca, txtMarca, txtModelo, txtAno, txtPrecoDiaria;
+    private JTextField txtPlaca, txtPrecoDiaria, txtValorFipe;
     private JComboBox<String> comboCor;
+    private JComboBox<FipeItem> comboMarca, comboModelo, comboAno;
+    private JLabel lblInfoDiaria;
     private JButton btnSalvar, btnRemover;
 
     public PainelGerenciamentoVeiculos() {
         super(new BorderLayout(20, 20));
+        this.fipeApiClient = new FipeApiClient();
         setBorder(new EmptyBorder(20, 30, 20, 30));
         setBackground(UIDesigner.COLOR_BACKGROUND);
 
@@ -71,19 +64,11 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         painelDetalhes.setVisible(false);
     }
 
-    /**
-     * Carrega a lista de veículos do arquivo e atualiza a exibição.
-     */
     public void carregarVeiculos() {
         this.listaCompletaVeiculos = GerenciadorVeiculos.carregarVeiculos();
         filtrarVeiculos("");
     }
 
-    /**
-     * Filtra e exibe os veículos com base em um termo de busca.
-     * 
-     * @param termo O texto a ser buscado na descrição do veículo.
-     */
     private void filtrarVeiculos(String termo) {
         painelCards.removeAll();
         termo = termo.toLowerCase();
@@ -96,9 +81,6 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         painelCards.repaint();
     }
 
-    /**
-     * Cria o painel superior contendo o título e os botões de ação principal.
-     */
     private JPanel createPainelAcoes() {
         JPanel painel = new JPanel(new BorderLayout(20, 20));
         painel.setOpaque(false);
@@ -128,12 +110,6 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         return painel;
     }
 
-    /**
-     * Cria um card visual para representar um único veículo.
-     * 
-     * @param veiculo O objeto Veiculo a ser exibido.
-     * @return Um JPanel estilizado como um card.
-     */
     private JPanel createVeiculoCard(Veiculo veiculo) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
         card.setBorder(UIDesigner.BORDER_CARD);
@@ -186,17 +162,13 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         return card;
     }
 
-    /**
-     * Cria o painel lateral de detalhes/formulário para adicionar ou editar
-     * veículos.
-     */
     private JPanel createPainelDetalhes() {
         JPanel painel = new JPanel(new BorderLayout(15, 15));
         painel.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
         painel.setBorder(BorderFactory.createCompoundBorder(
                 new MatteBorder(0, 1, 0, 0, UIDesigner.COLOR_BORDER),
                 new EmptyBorder(20, 20, 20, 20)));
-        painel.setPreferredSize(new Dimension(350, 0));
+        painel.setPreferredSize(new Dimension(380, 0));
 
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
@@ -227,20 +199,30 @@ public class PainelGerenciamentoVeiculos extends JPanel {
 
         formPanel.add(new JLabel("Marca"), gbc);
         gbc.gridy++;
-        txtMarca = new JTextField();
-        formPanel.add(txtMarca, gbc);
+        comboMarca = new JComboBox<>();
+        formPanel.add(comboMarca, gbc);
         gbc.gridy++;
 
         formPanel.add(new JLabel("Modelo"), gbc);
         gbc.gridy++;
-        txtModelo = new JTextField();
-        formPanel.add(txtModelo, gbc);
+        comboModelo = new JComboBox<>();
+        comboModelo.setEnabled(false);
+        formPanel.add(comboModelo, gbc);
         gbc.gridy++;
 
         formPanel.add(new JLabel("Ano"), gbc);
         gbc.gridy++;
-        txtAno = new JTextField();
-        formPanel.add(txtAno, gbc);
+        comboAno = new JComboBox<>();
+        comboAno.setEnabled(false);
+        formPanel.add(comboAno, gbc);
+        gbc.gridy++;
+
+        formPanel.add(new JLabel("Valor (FIPE)"), gbc);
+        gbc.gridy++;
+        txtValorFipe = new JTextField("Selecione marca, modelo e ano");
+        txtValorFipe.setEditable(false);
+        txtValorFipe.setFont(txtValorFipe.getFont().deriveFont(Font.BOLD));
+        formPanel.add(txtValorFipe, gbc);
         gbc.gridy++;
 
         formPanel.add(new JLabel("Cor"), gbc);
@@ -250,13 +232,25 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         formPanel.add(comboCor, gbc);
         gbc.gridy++;
 
+        JPanel painelDiaria = new JPanel(new BorderLayout(5, 0));
+        painelDiaria.setOpaque(false);
+        txtPrecoDiaria = new JTextField();
+        lblInfoDiaria = new JLabel("(1% do valor FIPE)");
+        lblInfoDiaria.setFont(UIDesigner.FONT_BODY.deriveFont(11f));
+        lblInfoDiaria.setForeground(UIDesigner.COLOR_TEXT_SECONDARY);
+        painelDiaria.add(txtPrecoDiaria, BorderLayout.CENTER);
+        painelDiaria.add(lblInfoDiaria, BorderLayout.EAST);
+
         formPanel.add(new JLabel("Preço da Diária (R$)"), gbc);
         gbc.gridy++;
-        txtPrecoDiaria = new JTextField();
-        formPanel.add(txtPrecoDiaria, gbc);
+        formPanel.add(painelDiaria, gbc);
         gbc.gridy++;
 
         painel.add(formPanel, BorderLayout.CENTER);
+
+        comboMarca.addActionListener(e -> carregarModelos());
+        comboModelo.addActionListener(e -> carregarAnos());
+        comboAno.addActionListener(e -> carregarValorFipe());
 
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         botoesPanel.setOpaque(false);
@@ -272,67 +266,167 @@ public class PainelGerenciamentoVeiculos extends JPanel {
         return painel;
     }
 
-    /**
-     * Torna o painel de detalhes visível e preenche seus campos.
-     * 
-     * @param veiculo O veículo a ser editado, ou null para adicionar um novo.
-     */
     private void mostrarPainelDetalhes(Veiculo veiculo) {
         this.veiculoSelecionado = veiculo;
-        if (veiculo != null) { // Editando
+        comboMarca.removeAllItems();
+        comboModelo.removeAllItems();
+        comboAno.removeAllItems();
+        txtValorFipe.setText("Selecione marca, modelo e ano");
+
+        if (veiculo != null) {
             lblTituloDetalhes.setText("Detalhes do Veículo");
             txtPlaca.setText(veiculo.getPlacaFormatada());
             txtPlaca.setEditable(false);
-            txtMarca.setText(veiculo.getMarca());
-            txtMarca.setEditable(false);
-            txtModelo.setText(veiculo.getModelo());
-            txtModelo.setEditable(false);
-            txtAno.setText(String.valueOf(veiculo.getAno()));
-            txtAno.setEditable(false);
+
+            comboMarca.addItem(new FipeItem(null, veiculo.getMarca()));
+            comboModelo.addItem(new FipeItem(null, veiculo.getModelo()));
+            comboAno.addItem(new FipeItem(null, String.valueOf(veiculo.getAno())));
+            comboMarca.setEnabled(false);
+            comboModelo.setEnabled(false);
+            comboAno.setEnabled(false);
+
             comboCor.setSelectedItem(veiculo.getCor());
             txtPrecoDiaria.setText(String.format("%.2f", veiculo.getPrecoDiaria()).replace(",", "."));
+            txtValorFipe.setText(veiculo.getValorFipe() > 0 ? String.format("R$ %.2f", veiculo.getValorFipe()) : "N/A");
+
             btnRemover.setVisible(true);
-        } else { // Adicionando
+            lblInfoDiaria.setVisible(false);
+        } else {
             lblTituloDetalhes.setText("Adicionar Novo Veículo");
             txtPlaca.setText("");
             txtPlaca.setEditable(true);
-            txtMarca.setText("");
-            txtMarca.setEditable(true);
-            txtModelo.setText("");
-            txtModelo.setEditable(true);
-            txtAno.setText("");
-            txtAno.setEditable(true);
+
+            comboModelo.setEnabled(false);
+            comboAno.setEnabled(false);
+            comboMarca.setEnabled(true);
+
+            carregarMarcas();
+
             comboCor.setSelectedIndex(0);
             txtPrecoDiaria.setText("");
             btnRemover.setVisible(false);
+            lblInfoDiaria.setVisible(true);
         }
         painelDetalhes.setVisible(true);
         revalidate();
         repaint();
     }
 
+    private void carregarMarcas() {
+        comboMarca.removeAllItems();
+        comboModelo.removeAllItems();
+        comboAno.removeAllItems();
+        comboMarca.addItem(new FipeItem(null, "Selecione a Marca..."));
+        new Thread(() -> {
+            fipeApiClient.getMarcas().forEach(comboMarca::addItem);
+        }).start();
+    }
+
+    private void carregarModelos() {
+        if (comboMarca.getSelectedIndex() <= 0) {
+            comboModelo.removeAllItems();
+            comboModelo.setEnabled(false);
+            return;
+        }
+        FipeItem marcaSelecionada = (FipeItem) comboMarca.getSelectedItem();
+        comboModelo.removeAllItems();
+        comboModelo.addItem(new FipeItem(null, "Carregando..."));
+        comboModelo.setEnabled(false);
+        new Thread(() -> {
+            List<FipeItem> modelos = fipeApiClient.getModelos(marcaSelecionada.getCode());
+            SwingUtilities.invokeLater(() -> {
+                comboModelo.removeAllItems();
+                comboModelo.addItem(new FipeItem(null, "Selecione o Modelo..."));
+                modelos.forEach(comboModelo::addItem);
+                comboModelo.setEnabled(true);
+            });
+        }).start();
+    }
+
+    private void carregarAnos() {
+        if (comboModelo.getSelectedIndex() <= 0) {
+            comboAno.removeAllItems();
+            comboAno.setEnabled(false);
+            return;
+        }
+        FipeItem marca = (FipeItem) comboMarca.getSelectedItem();
+        FipeItem modelo = (FipeItem) comboModelo.getSelectedItem();
+        comboAno.removeAllItems();
+        comboAno.addItem(new FipeItem(null, "Carregando..."));
+        comboAno.setEnabled(false);
+        new Thread(() -> {
+            // A lista de anos já virá filtrada do FipeApiClient
+            List<FipeItem> anos = fipeApiClient.getAnos(marca.getCode(), modelo.getCode());
+            SwingUtilities.invokeLater(() -> {
+                comboAno.removeAllItems();
+                comboAno.addItem(new FipeItem(null, "Selecione o Ano..."));
+                anos.forEach(comboAno::addItem);
+                comboAno.setEnabled(true);
+            });
+        }).start();
+    }
+
+    private void carregarValorFipe() {
+        if (comboAno.getSelectedIndex() <= 0) {
+            txtValorFipe.setText("Selecione um ano");
+            txtPrecoDiaria.setText("");
+            return;
+        }
+        FipeItem marca = (FipeItem) comboMarca.getSelectedItem();
+        FipeItem modelo = (FipeItem) comboModelo.getSelectedItem();
+        FipeItem ano = (FipeItem) comboAno.getSelectedItem();
+
+        txtValorFipe.setText("Buscando valor...");
+        new Thread(() -> {
+            FipeApiClient.VeiculoFipe veiculoFipe = fipeApiClient.getValor(marca.getCode(), modelo.getCode(),
+                    ano.getCode());
+            SwingUtilities.invokeLater(() -> {
+                if (veiculoFipe != null) {
+                    double valor = veiculoFipe.getValorNumerico();
+                    double diaria = valor * 0.01;
+
+                    txtValorFipe.setText(veiculoFipe.getValor());
+                    txtPrecoDiaria.setText(String.format("%.2f", diaria).replace(",", "."));
+                } else {
+                    txtValorFipe.setText("Valor não encontrado");
+                }
+            });
+        }).start();
+    }
+
     /**
+     * MÉTODO CORRIGIDO
      * Valida os campos e salva um veículo novo ou atualiza um existente.
+     * Inclui uma verificação para garantir que o valor FIPE foi carregado e usa um
+     * método de parsing mais seguro.
      */
     private void salvarVeiculo() {
         try {
-            String placa = txtPlaca.getText().replaceAll("-", "").trim();
-            String marca = txtMarca.getText().trim();
-            String modelo = txtModelo.getText().trim();
-            int ano = Integer.parseInt(txtAno.getText().trim());
-            String cor = (String) comboCor.getSelectedItem();
-            double precoDiaria = Double.parseDouble(txtPrecoDiaria.getText().replace(",", "."));
-
-            if (placa.isEmpty() || marca.isEmpty() || modelo.isEmpty() || cor == null) {
-                JOptionPane.showMessageDialog(this, "Todos os campos são obrigatórios.", "Erro",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
             if (veiculoSelecionado != null) { // Atualização
-                veiculoSelecionado.setCor(cor);
+                veiculoSelecionado.setCor((String) comboCor.getSelectedItem());
+                double precoDiaria = Double.parseDouble(txtPrecoDiaria.getText().replace(",", "."));
                 veiculoSelecionado.setPrecoDiaria(precoDiaria);
-            } else { // Novo
+            } else { // Novo Veículo
+                String placa = txtPlaca.getText().replaceAll("-", "").trim().toUpperCase();
+                FipeItem marca = (FipeItem) comboMarca.getSelectedItem();
+                FipeItem modelo = (FipeItem) comboModelo.getSelectedItem();
+                FipeItem ano = (FipeItem) comboAno.getSelectedItem();
+                String cor = (String) comboCor.getSelectedItem();
+
+                if (placa.isBlank() || comboMarca.getSelectedIndex() <= 0 || comboModelo.getSelectedIndex() <= 0
+                        || comboAno.getSelectedIndex() <= 0) {
+                    JOptionPane.showMessageDialog(this, "Todos os campos (Placa, Marca, Modelo, Ano) são obrigatórios.",
+                            "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                String valorFipeTexto = txtValorFipe.getText();
+                if (valorFipeTexto == null || !valorFipeTexto.startsWith("R$")) {
+                    JOptionPane.showMessageDialog(this, "Aguarde o carregamento do valor FIPE ou verifique a seleção.",
+                            "Valor FIPE Inválido", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
                 Optional<Veiculo> existente = GerenciadorVeiculos.carregarVeiculos().stream()
                         .filter(v -> v.getPlaca().equals(placa)).findFirst();
                 if (existente.isPresent()) {
@@ -340,7 +434,27 @@ public class PainelGerenciamentoVeiculos extends JPanel {
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                veiculoSelecionado = new Veiculo(placa, marca, modelo, ano, cor, precoDiaria);
+
+                double precoDiaria = Double.parseDouble(txtPrecoDiaria.getText().replace(",", "."));
+
+                // CORREÇÃO: Utiliza um método de parsing mais robusto para o valor FIPE.
+                double valorFipe;
+                try {
+                    String valorLimpo = valorFipeTexto.replace("R$", "").trim().replace(".", "").replace(",", ".");
+                    if (valorLimpo.isBlank()) {
+                        throw new NumberFormatException("Valor FIPE vazio após limpeza.");
+                    }
+                    valorFipe = Double.parseDouble(valorLimpo);
+                } catch (NumberFormatException ex) {
+                    // Se o parsing falhar mesmo após a limpeza, lança uma ParseException
+                    // para ser capturada pelo bloco de erro genérico abaixo.
+                    throw new ParseException("Formato de valor FIPE inválido: " + valorFipeTexto, 0);
+                }
+
+                int anoInt = Integer.parseInt(ano.getName().split(" ")[0]);
+
+                veiculoSelecionado = new Veiculo(placa, marca.getName(), modelo.getName(), anoInt, cor, precoDiaria,
+                        valorFipe);
                 listaCompletaVeiculos.add(veiculoSelecionado);
             }
 
@@ -352,14 +466,17 @@ public class PainelGerenciamentoVeiculos extends JPanel {
             painelDetalhes.setVisible(false);
 
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Ano e Preço devem ser números válidos.", "Erro de Formato",
+            JOptionPane.showMessageDialog(this, "Preço da diária deve ser um número válido.", "Erro de Formato",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (ParseException e) {
+            JOptionPane.showMessageDialog(this, "Não foi possível ler o valor FIPE. Verifique a seleção.",
+                    "Erro de Valor", JOptionPane.ERROR_MESSAGE);
+        } catch (HeadlessException e) {
+            JOptionPane.showMessageDialog(this, "Ocorreu um erro inesperado ao salvar: " + e.getMessage(), "Erro",
                     JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    /**
-     * Remove o veículo selecionado do sistema.
-     */
     private void removerVeiculo() {
         if (veiculoSelecionado == null)
             return;

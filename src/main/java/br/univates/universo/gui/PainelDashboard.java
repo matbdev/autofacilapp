@@ -1,7 +1,6 @@
 package br.univates.universo.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -9,8 +8,6 @@ import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import br.univates.universo.data.GerenciadorAlugueis;
 import br.univates.universo.data.GerenciadorClientes;
@@ -22,7 +19,7 @@ import br.univates.universo.util.UIDesigner;
  * Exibe cartões com estatísticas chave, como veículos disponíveis,
  * aluguéis ativos e total de clientes.
  *
- * @version 3.0
+ * @version 3.1
  */
 public class PainelDashboard extends JPanel {
 
@@ -33,36 +30,26 @@ public class PainelDashboard extends JPanel {
                 setBorder(new EmptyBorder(20, 30, 20, 30));
                 setBackground(UIDesigner.COLOR_BACKGROUND);
 
-                // Título principal do painel
                 JLabel titleLabel = new JLabel("Dashboard");
                 titleLabel.setFont(UIDesigner.FONT_TITLE);
                 titleLabel.setForeground(UIDesigner.COLOR_FOREGROUND);
                 add(titleLabel, BorderLayout.NORTH);
 
-                // Painel para organizar os cartões de estatísticas
                 JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 20));
-                statsPanel.setOpaque(false); // Fundo transparente
+                statsPanel.setOpaque(false);
 
-                // Inicializa os labels que conterão os números
                 lblVeiculosDisponiveis = new JLabel("0");
                 lblAlugueisAtivos = new JLabel("0");
                 lblClientesCadastrados = new JLabel("0");
 
-                // Cria e adiciona cada cartão de estatística
-                statsPanel.add(createStatCard("Veículos Disponíveis", lblVeiculosDisponiveis, "icons/vehicle.svg",
-                                UIDesigner.COLOR_SUCCESS));
-                statsPanel.add(createStatCard("Aluguéis Ativos", lblAlugueisAtivos, "icons/rental.svg",
-                                UIDesigner.COLOR_ACCENT));
-                statsPanel.add(createStatCard("Clientes Cadastrados", lblClientesCadastrados, "icons/customer.svg",
-                                UIDesigner.COLOR_PRIMARY));
+                // Alterado para usar caminhos de ícones .png
+                statsPanel.add(createStatCard("Veículos Disponíveis", lblVeiculosDisponiveis, "icons/vehicle.png"));
+                statsPanel.add(createStatCard("Aluguéis Ativos", lblAlugueisAtivos, "icons/rental.png"));
+                statsPanel.add(createStatCard("Clientes Cadastrados", lblClientesCadastrados, "icons/customer.png"));
 
                 add(statsPanel, BorderLayout.CENTER);
         }
 
-        /**
-         * Carrega os dados mais recentes dos arquivos e atualiza os valores nos
-         * cartões.
-         */
         public void atualizarDados() {
                 long veiculosDisponiveis = GerenciadorVeiculos.carregarVeiculos().stream()
                                 .filter(v -> "Disponível".equals(v.getStatus())).count();
@@ -77,14 +64,14 @@ public class PainelDashboard extends JPanel {
 
         /**
          * Método fábrica para criar um cartão de estatística padronizado.
+         * Utiliza o método de redimensionamento de UIDesigner.
          *
          * @param title      O título do cartão (ex: "Veículos Disponíveis").
          * @param valueLabel O JLabel que exibirá o valor numérico.
-         * @param iconPath   O caminho para o ícone SVG.
-         * @param iconColor  A cor a ser aplicada ao ícone.
+         * @param iconPath   O caminho para o ícone PNG.
          * @return Um JPanel estilizado como um cartão de estatística.
          */
-        private JPanel createStatCard(String title, JLabel valueLabel, String iconPath, Color iconColor) {
+        private JPanel createStatCard(String title, JLabel valueLabel, String iconPath) {
                 JPanel card = new JPanel(new BorderLayout(10, 5));
                 card.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
                 card.setBorder(UIDesigner.BORDER_CARD);
@@ -102,10 +89,8 @@ public class PainelDashboard extends JPanel {
                 textPanel.add(titleLabel, BorderLayout.NORTH);
                 textPanel.add(valueLabel, BorderLayout.CENTER);
 
-                // Carrega e colore o ícone SVG
-                FlatSVGIcon icon = new FlatSVGIcon(iconPath);
-                icon.setColorFilter(new FlatSVGIcon.ColorFilter(c -> iconColor));
-                JLabel iconLabel = new JLabel(icon.derive(48, 48));
+                // Carrega e redimensiona o ícone PNG
+                JLabel iconLabel = new JLabel(UIDesigner.redimensionarIconePNG(iconPath, 48, 48));
                 iconLabel.setBorder(new EmptyBorder(0, 0, 0, 15));
 
                 card.add(textPanel, BorderLayout.CENTER);

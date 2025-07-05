@@ -1,6 +1,7 @@
 package br.univates.universo.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -40,7 +41,7 @@ import br.univates.universo.util.UIDesigner;
  * Separa as ações de Saída e Devolução em cards e utiliza abas para
  * organizar os aluguéis ativos e o histórico.
  *
- * @version 3.1
+ * @version 3.2 (Modificado)
  */
 public class PainelGerenciamentoAlugueis extends JPanel {
 
@@ -49,8 +50,6 @@ public class PainelGerenciamentoAlugueis extends JPanel {
     private DatePicker pickerDataSaida, pickerDataPrevistaDevolucao, pickerDataDevolucaoEfetiva;
     private final JTable tabelaAlugueisAtivos, tabelaHistorico;
     private final DefaultTableModel modeloAtivos, modeloHistorico;
-    // A referência ao painel de veículos ainda é útil, mas não para o método que
-    // causava erro.
     @SuppressWarnings("unused")
     private final PainelGerenciamentoVeiculos painelVeiculosRef;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -73,13 +72,24 @@ public class PainelGerenciamentoAlugueis extends JPanel {
 
         JTabbedPane painelTabelas = new JTabbedPane();
 
-        modeloAtivos = new DefaultTableModel(new String[] { "ID", "Cliente", "Veículo", "Saída", "Previsão" }, 0);
+        modeloAtivos = new DefaultTableModel(new String[] { "ID", "Cliente", "Veículo", "Saída", "Previsão" }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         tabelaAlugueisAtivos = new JTable(modeloAtivos);
         tabelaAlugueisAtivos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollAtivos = new JScrollPane(tabelaAlugueisAtivos);
 
-        modeloHistorico = new DefaultTableModel(new String[] { "ID", "Cliente", "Veículo", "Status", "Valor Total" },
-                0);
+        // NOVO: Adicionada a coluna "Valor Multa"
+        modeloHistorico = new DefaultTableModel(
+                new String[] { "ID", "Cliente", "Veículo", "Status", "Valor Total", "Valor Multa" }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         tabelaHistorico = new JTable(modeloHistorico);
         JScrollPane scrollHistorico = new JScrollPane(tabelaHistorico);
 
@@ -87,17 +97,15 @@ public class PainelGerenciamentoAlugueis extends JPanel {
         painelTabelas.addTab("Histórico de Locações", scrollHistorico);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, painelFormularios, painelTabelas);
-        splitPane.setDividerLocation(280);
+        splitPane.setDividerLocation(320); // Aumentado para acomodar o aviso
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
         add(splitPane, BorderLayout.CENTER);
     }
 
-    /**
-     * Cria o card para registrar a saída de um veículo.
-     */
     private JPanel createPainelSaida() {
+        // ... (código original sem alterações)
         JPanel painel = new JPanel(new BorderLayout(15, 15));
         painel.setBorder(UIDesigner.BORDER_CARD);
         painel.setBackground(UIDesigner.COLOR_CARD_BACKGROUND);
@@ -162,9 +170,6 @@ public class PainelGerenciamentoAlugueis extends JPanel {
         return painel;
     }
 
-    /**
-     * Cria o card para registrar a devolução de um veículo.
-     */
     private JPanel createPainelDevolucao() {
         JPanel painel = new JPanel(new BorderLayout(15, 15));
         painel.setBorder(UIDesigner.BORDER_CARD);
@@ -194,7 +199,19 @@ public class PainelGerenciamentoAlugueis extends JPanel {
         JLabel infoLabel = new JLabel(
                 "<html>Selecione um aluguel na tabela 'Ativos' abaixo para registrar a devolução.</html>");
         infoLabel.setForeground(UIDesigner.COLOR_TEXT_SECONDARY);
-        painel.add(infoLabel, BorderLayout.CENTER);
+
+        // NOVO: Aviso sobre a multa por atraso
+        JLabel avisoMulta = new JLabel(
+                "<html><b>Aviso:</b> Para cada dia de atraso na devolução, será aplicada uma multa cumulativa de 10% sobre o valor total do aluguel.</html>");
+        avisoMulta.setForeground(new Color(239, 68, 68)); // Tom de vermelho
+        avisoMulta.setBorder(new EmptyBorder(10, 0, 10, 0));
+
+        JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
+        centerPanel.setOpaque(false);
+        centerPanel.add(infoLabel, BorderLayout.NORTH);
+        centerPanel.add(avisoMulta, BorderLayout.CENTER);
+
+        painel.add(centerPanel, BorderLayout.CENTER);
 
         JButton btnRegistrar = UIDesigner.createPrimaryButton("Registrar Devolução", "icons/check.svg");
         btnRegistrar.addActionListener(e -> registrarDevolucao());
@@ -208,9 +225,6 @@ public class PainelGerenciamentoAlugueis extends JPanel {
         return painel;
     }
 
-    /**
-     * Carrega e atualiza todos os dados exibidos no painel (combos e tabelas).
-     */
     public void atualizarDados() {
         comboClientes.removeAllItems();
         GerenciadorClientes.carregarClientes().forEach(comboClientes::addItem);
@@ -237,16 +251,25 @@ public class PainelGerenciamentoAlugueis extends JPanel {
                 modeloAtivos.addRow(new Object[] { aluguel.getIdAluguel(), nomeCliente, descVeiculo,
                         aluguel.getDataSaida(), aluguel.getDataPrevistaDevolucao() });
             } else {
-                modeloHistorico.addRow(new Object[] { aluguel.getIdAluguel(), nomeCliente, descVeiculo,
-                        aluguel.getStatusAluguel(), String.format("R$ %.2f", aluguel.getValorTotal()) });
+                // NOVO: Adiciona o valor da multa na linha da tabela de histórico
+                String valorMultaFormatado = "---";
+                if (aluguel.getValorMulta() > 0) {
+                    valorMultaFormatado = String.format("R$ %.2f", aluguel.getValorMulta());
+                }
+                modeloHistorico.addRow(new Object[] {
+                        aluguel.getIdAluguel(),
+                        nomeCliente,
+                        descVeiculo,
+                        aluguel.getStatusAluguel(),
+                        String.format("R$ %.2f", aluguel.getValorTotal()),
+                        valorMultaFormatado
+                });
             }
         }
     }
 
-    /**
-     * Valida e executa o processo de registrar a saída de um veículo.
-     */
     private void registrarSaida() {
+        // ... (código original sem alterações)
         Cliente cliente = (Cliente) comboClientes.getSelectedItem();
         Veiculo veiculo = (Veiculo) comboVeiculos.getSelectedItem();
         LocalDate dataSaida = pickerDataSaida.getDate();
@@ -277,15 +300,10 @@ public class PainelGerenciamentoAlugueis extends JPanel {
         JOptionPane.showMessageDialog(this, "Saída registrada com sucesso!", "Sucesso",
                 JOptionPane.INFORMATION_MESSAGE);
         atualizarDados();
-        // A linha abaixo foi removida para corrigir o erro de compilação.
-        // A atualização do painel de veículos agora é gerenciada pela JanelaPrincipal.
-        // painelVeiculosRef.carregarVeiculos();
     }
 
-    /**
-     * Valida e executa o processo de registrar a devolução de um veículo.
-     */
     private void registrarDevolucao() {
+        // ... (código original sem alterações)
         int selectedRow = tabelaAlugueisAtivos.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Selecione um aluguel ativo na tabela.", "Aviso",
@@ -322,19 +340,22 @@ public class PainelGerenciamentoAlugueis extends JPanel {
 
             if (veiculoOpt.isPresent()) {
                 Veiculo veiculo = veiculoOpt.get();
-                aluguel.finalizarAluguel(dataDevolucao.format(formatter), veiculo.getPrecoDiaria());
+                // Assumindo que o método finalizarAluguel foi atualizado para calcular a multa
+                // internamente
+                aluguel.finalizarAluguel(dataDevolucao.format(formatter));
                 veiculo.devolver();
 
                 GerenciadorAlugueis.salvarAlugueis(alugueis);
                 GerenciadorVeiculos.salvarVeiculos(veiculos);
 
                 String msg = String.format("Devolução registrada! Valor Total: R$ %.2f", aluguel.getValorTotal());
+                if (aluguel.getValorMulta() > 0) {
+                    msg += String.format("\nMulta por atraso: R$ %.2f", aluguel.getValorMulta());
+                }
+
                 JOptionPane.showMessageDialog(this, msg, "Devolução Concluída", JOptionPane.INFORMATION_MESSAGE);
 
                 atualizarDados();
-                // A linha abaixo foi removida para corrigir o erro de compilação.
-                // A atualização do painel de veículos agora é gerenciada pela JanelaPrincipal.
-                // painelVeiculosRef.carregarVeiculos();
             }
         }
     }
